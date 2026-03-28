@@ -7,6 +7,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 
 
@@ -32,6 +33,7 @@ load_env_file()
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "reserva-escola-secret-key")
 APP_TIMEZONE = ZoneInfo(os.getenv("APP_TIMEZONE", "America/Sao_Paulo"))
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 SQLITE_PATH = BASE_DIR / "reservas.db"
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
@@ -362,7 +364,12 @@ def sair():
 @app.route("/app")
 @login_required
 def index():
-    return render_template("index.html", usuario=usuario_logado(), **get_calendar_context())
+    return render_template(
+        "index.html",
+        usuario=usuario_logado(),
+        app_timezone=str(APP_TIMEZONE),
+        **get_calendar_context(),
+    )
 
 
 @app.route("/reservas", methods=["GET"])
@@ -493,4 +500,8 @@ def excluir_usuario(usuario_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        debug=True,
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", "5000")),
+    )

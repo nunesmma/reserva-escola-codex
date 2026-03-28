@@ -154,6 +154,9 @@
             nome: {{ usuario["nome"]|tojson }},
             perfil: {{ usuario["perfil"]|tojson }}
         };
+        window.APP_CONFIG = {
+            timezone: {{ app_timezone|tojson }}
+        };
     </script>
     <script src="{{ url_for('static', filename='script.js', v='20260327-auth-2') }}"></script>
 </body>

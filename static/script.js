@@ -1,4 +1,6 @@
 const currentUser = window.APP_USER || null;
+const appConfig = window.APP_CONFIG || {};
+const appTimezone = appConfig.timezone || "America/Sao_Paulo";
 const areaSelect = document.getElementById("area");
 const dataInput = document.getElementById("data");
 const inicioInput = document.getElementById("inicio");
@@ -118,22 +120,42 @@ function formatarData(dataIso) {
     return `${dia}/${mes}/${ano}`;
 }
 
+function getHojeNoTimezone() {
+    const partes = new Intl.DateTimeFormat("en-CA", {
+        timeZone: appTimezone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+    }).formatToParts(new Date());
+
+    const mapa = Object.fromEntries(
+        partes.filter((parte) => parte.type !== "literal").map((parte) => [parte.type, parte.value])
+    );
+
+    return `${mapa.year}-${mapa.month}-${mapa.day}`;
+}
+
 function definirDataMinima() {
-    const hoje = new Date();
-    const ano = hoje.getFullYear();
-    const mes = String(hoje.getMonth() + 1).padStart(2, "0");
-    const dia = String(hoje.getDate()).padStart(2, "0");
-    dataInput.min = `${ano}-${mes}-${dia}`;
+    dataInput.min = getHojeNoTimezone();
 }
 
 function horarioJaPassou(data, hora) {
     if (!data || !hora) return false;
-    const horario = new Date(`${data}T${hora}:00`);
-    return Number.isNaN(horario.getTime()) ? false : horario <= new Date();
+    if (data > getHojeNoTimezone()) return false;
+    if (data < getHojeNoTimezone()) return true;
+
+    const agoraNoTimezone = new Intl.DateTimeFormat("en-GB", {
+        timeZone: appTimezone,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+    }).format(new Date());
+
+    return hora <= agoraNoTimezone;
 }
 
 function atualizarResumo(reservas) {
-    const hoje = new Date().toISOString().split("T")[0];
+    const hoje = getHojeNoTimezone();
     const contagemAreas = {};
     let reservasHoje = 0;
 
