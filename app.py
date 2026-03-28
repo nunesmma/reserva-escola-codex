@@ -4,6 +4,7 @@ import sqlite3
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -30,6 +31,7 @@ load_env_file()
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "reserva-escola-secret-key")
+APP_TIMEZONE = ZoneInfo(os.getenv("APP_TIMEZONE", "America/Sao_Paulo"))
 
 SQLITE_PATH = BASE_DIR / "reservas.db"
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
@@ -182,7 +184,7 @@ def init_db():
                 admin_email,
                 generate_password_hash("admin123"),
                 "admin",
-                datetime.now().isoformat(timespec="seconds"),
+                datetime.now(APP_TIMEZONE).isoformat(timespec="seconds"),
             ),
         )
         conn.commit()
@@ -207,11 +209,11 @@ def horario_conflita(inicio_a, fim_a, inicio_b, fim_b):
 
 
 def parse_reserva_datetime(data_str, hora_str):
-    return datetime.strptime(f"{data_str} {hora_str}", "%Y-%m-%d %H:%M")
+    return datetime.strptime(f"{data_str} {hora_str}", "%Y-%m-%d %H:%M").replace(tzinfo=APP_TIMEZONE)
 
 
 def get_calendar_context():
-    hoje = datetime.now()
+    hoje = datetime.now(APP_TIMEZONE)
     calendario = calendar.Calendar(firstweekday=0)
     semanas = calendario.monthdayscalendar(hoje.year, hoje.month)
     nomes_meses = [
@@ -326,7 +328,7 @@ def cadastro():
                         INSERT INTO usuarios (nome, email, senha_hash, perfil, criado_em)
                         VALUES (?, ?, ?, ?, ?)
                         """,
-                        (nome, email, generate_password_hash(senha), perfil, datetime.now().isoformat(timespec="seconds")),
+                        (nome, email, generate_password_hash(senha), perfil, datetime.now(APP_TIMEZONE).isoformat(timespec="seconds")),
                     )
                     conn.commit()
                     session["user_id"] = cursor.lastrowid
@@ -340,7 +342,7 @@ def cadastro():
                                 RETURNING id
                                 """
                             ),
-                            (nome, email, generate_password_hash(senha), perfil, datetime.now().isoformat(timespec="seconds")),
+                            (nome, email, generate_password_hash(senha), perfil, datetime.now(APP_TIMEZONE).isoformat(timespec="seconds")),
                         )
                         session["user_id"] = cur.fetchone()["id"]
                     conn.commit()
@@ -421,7 +423,7 @@ def reservar():
     except ValueError:
         return jsonify({"status": "erro", "msg": "Data ou horário inválido."}), 400
 
-    agora = datetime.now()
+    agora = datetime.now(APP_TIMEZONE)
     if inicio_reserva <= agora:
         return jsonify({"status": "erro", "msg": "Não é permitido reservar datas ou horários que já passaram."}), 400
     if fim_reserva <= agora:
