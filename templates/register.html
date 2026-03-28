@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar conta | Reserva de Espaços</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='20260327-auth-1') }}">
+</head>
+<body class="auth-body">
+    <button type="button" class="theme-toggle" data-theme-toggle>Modo escuro</button>
+    <main class="auth-page">
+        <section class="auth-panel auth-panel--brand">
+            <span class="eyebrow">Novo acesso</span>
+            <h1>Crie sua conta para reservar espaços da escola.</h1>
+            <p>Você pode entrar como aluno ou professor. O perfil de administrador fica reservado para gestão interna.</p>
+        </section>
+        <section class="auth-panel auth-panel--form">
+            <h2>Criar conta</h2>
+            <p>Preencha seus dados para começar.</p>
+            {% if erro %}
+                <div class="feedback feedback--error">{{ erro }}</div>
+            {% endif %}
+            <form method="post" class="auth-form">
+                <label class="field">
+                    <span>Nome completo</span>
+                    <input type="text" name="nome" required>
+                </label>
+                <label class="field">
+                    <span>E-mail</span>
+                    <input type="email" name="email" required>
+                </label>
+                <label class="field">
+                    <span>Perfil</span>
+                    <select name="perfil" required>
+                        <option value="aluno">Aluno</option>
+                        <option value="professor">Professor</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Senha</span>
+                    <input type="password" name="senha" minlength="6" required>
+                </label>
+                <button type="submit">Criar conta</button>
+            </form>
+            <p class="auth-switch">Já tem conta? <a href="{{ url_for('login') }}">Entrar</a></p>
+        </section>
+    </main>
+    <script src="{{ url_for('static', filename='script.js', v='20260327-auth-2') }}"></script>
+</body>
+</html>

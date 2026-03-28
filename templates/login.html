@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar | Reserva de Espaços</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='20260327-auth-1') }}">
+</head>
+<body class="auth-body">
+    <button type="button" class="theme-toggle" data-theme-toggle>Modo escuro</button>
+    <main class="auth-page">
+        <section class="auth-panel auth-panel--brand">
+            <span class="eyebrow">Reserva escolar</span>
+            <h1>Entre para acessar sua agenda de reservas.</h1>
+            <p>Alunos, professores e administradores usam a própria conta para reservar espaços com segurança.</p>
+        </section>
+        <section class="auth-panel auth-panel--form">
+            <h2>Entrar</h2>
+            <p>Use seu e-mail e senha para continuar.</p>
+            {% if erro %}
+                <div class="feedback feedback--error">{{ erro }}</div>
+            {% endif %}
+            <form method="post" class="auth-form">
+                <label class="field">
+                    <span>E-mail</span>
+                    <input type="email" name="email" required>
+                </label>
+                <label class="field">
+                    <span>Senha</span>
+                    <input type="password" name="senha" required>
+                </label>
+                <button type="submit">Entrar</button>
+            </form>
+            <p class="auth-switch">Ainda não tem conta? <a href="{{ url_for('cadastro') }}">Criar acesso</a></p>
+        </section>
+    </main>
+    <script src="{{ url_for('static', filename='script.js', v='20260327-auth-2') }}"></script>
+</body>
+</html>

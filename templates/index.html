@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reserva de Espaços</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='20260327-auth-1') }}">
+</head>
+<body>
+    <button type="button" class="theme-toggle" data-theme-toggle>Modo escuro</button>
+    <main class="page">
+        <section class="hero">
+            <div class="hero__content">
+                <span class="eyebrow">Reserva escolar</span>
+                <h1>Organize espaços da escola com um fluxo simples e claro.</h1>
+                <p>Reserve laboratório, biblioteca, quadra e outros ambientes em poucos cliques, com visualização das reservas já feitas.</p>
+                <div class="user-chip">
+                    <div>
+                        <strong>{{ usuario["nome"] }}</strong>
+                        <span>{{ usuario["perfil"]|capitalize }} • {{ usuario["email"] }}</span>
+                    </div>
+                    <form method="post" action="{{ url_for('sair') }}">
+                        <button type="submit" class="secondary-button">Sair da conta</button>
+                    </form>
+                </div>
+            </div>
+            <div class="hero__panel">
+                <div class="hero__panel-top">
+                    <div class="hero__badge">Calendário do mês</div>
+                    <button type="button" class="calendar-toggle" data-calendar-toggle aria-expanded="true">
+                        Ocultar calendário
+                    </button>
+                </div>
+                <div class="calendar-card">
+                    <div class="calendar-card__header">
+                        <div>
+                            <p class="calendar-card__label">Visão rápida</p>
+                            <h2>{{ calendar_month }}</h2>
+                        </div>
+                        <div class="calendar-card__today">{{ calendar_today }}</div>
+                    </div>
+                    <div class="calendar-weekdays">
+                        {% for weekday in calendar_weekdays %}
+                            <span>{{ weekday }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="calendar-grid">
+                        {% for week in calendar_weeks %}
+                            {% for day in week %}
+                                {% if day == 0 %}
+                                    <span class="calendar-day calendar-day--empty"></span>
+                                {% elif day == today_day %}
+                                    <span class="calendar-day calendar-day--today">{{ day }}</span>
+                                {% else %}
+                                    <span class="calendar-day">{{ day }}</span>
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="layout">
+            <div class="card form-card">
+                <div class="card__header">
+                    <h2>Nova reserva</h2>
+                    <p>Preencha os dados abaixo para registrar um horário.</p>
+                </div>
+                <div id="feedback" class="feedback" aria-live="polite"></div>
+                <form id="reserva-form" class="form-grid">
+                    <div class="field field--full field--static">
+                        <span>Responsável</span>
+                        <div class="static-value">{{ usuario["nome"] }}</div>
+                    </div>
+                    <label class="field">
+                        <span>Área</span>
+                        <select id="area" name="area" required>
+                            <option value="">Selecione</option>
+                            <option>Laboratório Maker</option>
+                            <option>Laboratório de Ciências</option>
+                            <option>Biblioteca</option>
+                            <option>Sala Multiuso</option>
+                            <option>Quadra</option>
+                            <option>Pátio Aberto</option>
+                            <option>Pátio Fechado</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>Data</span>
+                        <input type="date" id="data" name="data" required>
+                    </label>
+                    <label class="field">
+                        <span>Início</span>
+                        <input type="time" id="inicio" name="inicio" required>
+                    </label>
+                    <label class="field">
+                        <span>Fim</span>
+                        <input type="time" id="fim" name="fim" required>
+                    </label>
+                    <div class="duration" id="duracao">Defina um horário para ver a duração.</div>
+                    <button id="submit-button" type="submit">Reservar horário</button>
+                </form>
+            </div>
+
+            <aside class="sidebar">
+                <div class="card stats-card">
+                    <div class="card__header">
+                        <h2>Painel rápido</h2>
+                        <p>Resumo das reservas registradas.</p>
+                    </div>
+                    <div class="stats">
+                        <div class="stat"><span>Total</span><strong id="total">0</strong></div>
+                        <div class="stat"><span>Hoje</span><strong id="hoje">0</strong></div>
+                        <div class="stat"><span>Mais usada</span><strong id="top">-</strong></div>
+                    </div>
+                </div>
+                <div class="card help-card">
+                    <h3>Acesso atual</h3>
+                    <p>Seu perfil é <strong>{{ usuario["perfil"] }}</strong>. Alunos e professores excluem apenas as próprias reservas. Administradores podem gerenciar todas.</p>
+                </div>
+            </aside>
+        </section>
+
+        <section class="card list-card">
+            <div class="card__header">
+                <h2>Reservas registradas</h2>
+                <p>Pesquise por nome e acompanhe quem reservou cada espaço.</p>
+            </div>
+            <div class="list-toolbar">
+                <label class="field field--full">
+                    <span>Pesquisar por nome</span>
+                    <input id="search-user" type="text" placeholder="Digite um nome para filtrar as reservas">
+                </label>
+            </div>
+            <div id="lista" class="reservas-lista"></div>
+        </section>
+
+        {% if usuario["perfil"] == "admin" %}
+        <section class="card admin-card">
+            <div class="card__header">
+                <h2>Usuários cadastrados</h2>
+                <p>Gerencie contas de alunos e professores. O histórico de reservas é preservado.</p>
+            </div>
+            <div id="admin-feedback" class="feedback" aria-live="polite"></div>
+            <div id="usuarios-lista" class="usuarios-lista"></div>
+        </section>
+        {% endif %}
+    </main>
+
+    <script>
+        window.APP_USER = {
+            id: {{ usuario["id"] }},
+            nome: {{ usuario["nome"]|tojson }},
+            perfil: {{ usuario["perfil"]|tojson }}
+        };
+    </script>
+    <script src="{{ url_for('static', filename='script.js', v='20260327-auth-2') }}"></script>
+</body>
+</html>
